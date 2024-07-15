@@ -1,18 +1,9 @@
-/*
- * tools.h
- *
- *  Created on: Sep 18, 2023
- *      Author: teddy
- */
-
-#ifndef INC_TOOLS_H_
-#define INC_TOOLS_H_
+#ifndef TOOLS_H
+#define TOOLS_H
+#include <stdint.h>
 
 
+uint32_t TOOLS_CRC32(uint8_t *data, uint32_t length);
 
 
-
-
-
-
-#endif /* INC_TOOLS_H_ */
+#endif // TOOLS_H

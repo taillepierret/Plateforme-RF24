@@ -7,7 +7,7 @@
   ******************************************************************************
   * @attention
   *
-  * Copyright (c) 2023 STMicroelectronics.
+  * Copyright (c) 2024 STMicroelectronics.
   * All rights reserved.
   *
   * This software is licensed under terms that can be found in the LICENSE file
@@ -59,28 +59,36 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
-#define offb_Pin GPIO_PIN_0
-#define offb_GPIO_Port GPIOH
-#define off_Pin GPIO_PIN_1
-#define off_GPIO_Port GPIOH
-#define onb_Pin GPIO_PIN_0
-#define onb_GPIO_Port GPIOA
-#define on_Pin GPIO_PIN_1
-#define on_GPIO_Port GPIOA
-#define cmd_pleins_phares_Pin GPIO_PIN_10
-#define cmd_pleins_phares_GPIO_Port GPIOB
-#define led_v_Pin GPIO_PIN_13
-#define led_v_GPIO_Port GPIOB
-#define direction_Pin GPIO_PIN_14
-#define direction_GPIO_Port GPIOB
-#define led_r_Pin GPIO_PIN_8
-#define led_r_GPIO_Port GPIOA
-#define CSN_Pin GPIO_PIN_15
-#define CSN_GPIO_Port GPIOA
-#define IRQ_Pin GPIO_PIN_8
-#define IRQ_GPIO_Port GPIOB
-#define CE_Pin GPIO_PIN_9
-#define CE_GPIO_Port GPIOB
+#define OFF_B_EN_Pin GPIO_PIN_0
+#define OFF_B_EN_GPIO_Port GPIOH
+#define OFF_EN_Pin GPIO_PIN_1
+#define OFF_EN_GPIO_Port GPIOH
+#define ON_B_EN_Pin GPIO_PIN_0
+#define ON_B_EN_GPIO_Port GPIOA
+#define ON_EN_Pin GPIO_PIN_1
+#define ON_EN_GPIO_Port GPIOA
+#define COURANT_MOTEUR_EN_Pin GPIO_PIN_4
+#define COURANT_MOTEUR_EN_GPIO_Port GPIOA
+#define TENSION_BATTERIE_EN_Pin GPIO_PIN_1
+#define TENSION_BATTERIE_EN_GPIO_Port GPIOB
+#define CMD_PLEINS_PHARES_EN_Pin GPIO_PIN_10
+#define CMD_PLEINS_PHARES_EN_GPIO_Port GPIOB
+#define LED_V_EN_Pin GPIO_PIN_13
+#define LED_V_EN_GPIO_Port GPIOB
+#define DIRECTION_EN_Pin GPIO_PIN_14
+#define DIRECTION_EN_GPIO_Port GPIOB
+#define LED_R_EN_Pin GPIO_PIN_8
+#define LED_R_EN_GPIO_Port GPIOA
+#define CSN_EN_Pin GPIO_PIN_15
+#define CSN_EN_GPIO_Port GPIOA
+#define SCK_EN_Pin GPIO_PIN_3
+#define SCK_EN_GPIO_Port GPIOB
+#define MISO_EN_Pin GPIO_PIN_4
+#define MISO_EN_GPIO_Port GPIOB
+#define MOSI_EN_Pin GPIO_PIN_5
+#define MOSI_EN_GPIO_Port GPIOB
+#define CE_EN_Pin GPIO_PIN_9
+#define CE_EN_GPIO_Port GPIOB
 
 /* USER CODE BEGIN Private defines */
 
