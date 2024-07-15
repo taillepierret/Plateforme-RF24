@@ -80,7 +80,7 @@ typedef enum
 }RADIO_steps_decode_packets_en;
 
 //global functions prototypes
-void RADIO_Init(bool (*treatment_function_B_PF)(RADIO_trame_UN), NRF_HAL_function_str NRF_HAL_function_STR);
+void RADIO_Init(bool (*treatment_function_B_PF)(RADIO_trame_UN), NRF_HAL_function_str NRF_HAL_function_STR, uint8_t protocol_version_U8, uint8_t network_ID_U8, uint8_t my_address_U8);
 void RADIO_SendData(uint8_t destination_address_U8, uint8_t trame_type_EN_6, uint8_t nb_nodes_traverses_U2, uint8_t payload_U8A[SIZE_PAYLOAD_U8]);
 void RADIO_addGroup(uint8_t group_address_U8);
 void RADIO_process(void);

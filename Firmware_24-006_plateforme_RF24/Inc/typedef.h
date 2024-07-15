@@ -10,16 +10,23 @@ typedef union
 }float32_uint32_UN;
 
 
+typedef enum
+{
+	HAL_LED_SET_OK,
+	HAL_LED_SET_ERROR,
+	HAL_SPI_WRITE_ERROR_EN,
+	HAL_SPI_WRITE_OK_EN,
+	HAL_SPI_READ_ERROR_EN,
+	HAL_SPI_READ_OK_EN
+}HAL_ret_val_en;
 
 
-
-
-
-
-
-
-
-
+typedef struct
+{
+	uint8_t seconds_U8;
+	uint8_t minutes_U8;
+	uint8_t hours_U8;
+}HAL_RTC_values_str;
 
 
 
