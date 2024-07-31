@@ -9,12 +9,22 @@
 #define LOG_SHOW_TIME_B true
 #define LOG_HIDE_TIME_B false
 
+#define LOG_SIZE_OF_COMMANDS_U8 ((uint8_t)10)
+#define LOG_COMMAND_LENGTH_U8 ((uint8_t)10)
+
 typedef enum {
 	LOG_LEVEL_VERBOSE_EN,
 	LOG_LEVEL_INFO_EN,
 	LOG_LEVEL_WARNING_EN,
 	LOG_LEVEL_ERROR_EN
 }LOG_level_en;
+
+typedef struct
+{
+	char command_CA[LOG_COMMAND_LENGTH_U8];
+	bool (*command_function_B_FP)(void);
+	bool (*command_function_with_argument_B_FP)(char* argument_CA);
+}LOG_command_str;
 
 typedef struct
 {

@@ -4,6 +4,7 @@
 
 static LOG_HAL_functions_str local_LOG_HAL_functions_STR;
 static LOG_level_en local_LOG_level_EN;
+static LOG_command_str local_LOG_command_STRA[LOG_SIZE_OF_COMMANDS_U8];
 
 void LOG_Init(LOG_HAL_functions_str *LOG_HAL_functions_STR)
 {
@@ -66,4 +67,24 @@ void LOG_setLogLevel(LOG_level_en log_level_EN) {
 	local_LOG_level_EN = log_level_EN;
 }
 
+bool LOG_addCommand(char *command_CA, bool (*command_function_B_FP)(void), bool (*command_function_with_argument_B_FP)(char *argument_CA))
+{
+	for (uint8_t counter_U8 = 0; counter_U8 < LOG_SIZE_OF_COMMANDS_U8; counter_U8++)
+	{
+		if (local_LOG_command_STRA[counter_U8].command_function_B_FP == NULL || local_LOG_command_STRA[counter_U8].command_function_with_argument_B_FP == NULL)
+		{
+			strcpy(local_LOG_command_STRA[counter_U8].command_CA, command_CA);
+			local_LOG_command_STRA[counter_U8].command_function_B_FP = command_function_B_FP;
+			local_LOG_command_STRA[counter_U8].command_function_with_argument_B_FP = command_function_with_argument_B_FP;
+			return true;
+		}
+	}
+	LOG_PrintString("No more space for the command: ", LOG_SHOW_TIME_B, LOG_LEVEL_ERROR_EN, LOG_SHOW_LOG_LEVEL_B);
+	LOG_PrintStringCRLF(command_CA, LOG_HIDE_TIME_B, LOG_LEVEL_ERROR_EN, LOG_SHOW_LOG_LEVEL_B);
+	return false;
+}
 
+bool LOG_TreatCommand(char *command_CA)
+{
+
+}
