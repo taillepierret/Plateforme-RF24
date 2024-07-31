@@ -2,6 +2,7 @@
 #define typedef_h
 
 #include <stdint.h>
+#include <stdbool.h>
 
 typedef union
 {
