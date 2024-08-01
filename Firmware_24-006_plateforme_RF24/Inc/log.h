@@ -33,12 +33,14 @@ typedef struct
 	void (*HAL_DebugPrint)(char* string);
 }LOG_HAL_functions_str;
 
-void LOG_Init(LOG_HAL_functions_str* LOG_HAL_functions_STR);
+void LOG_Init(LOG_HAL_functions_str *LOG_HAL_functions_STR, uint16_t size_buffer_uart_2_rx_U16);
 void LOG_PrintString(char* log_to_print_CP, bool show_time_B, LOG_level_en log_level_EN, bool show_log_level_B);
 void LOG_PrintStringCRLF(char* log_to_print_CP, bool show_time_B, LOG_level_en log_level_EN, bool show_log_level_B);
 void LOG_PrintUint8CRLF(uint8_t value_U8, LOG_level_en log_level_EN);
 void LOG_PrintUint8(uint8_t value_U8, LOG_level_en log_level_EN);
 void LOG_setLogLevel(LOG_level_en log_level_EN);
+bool LOG_TreatCommand_B(char* command_CA);
+void LOG_process(char* raw_buffer_CA, char *cleaning_buffer_CA);
 
 
 
