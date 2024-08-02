@@ -5,6 +5,8 @@
 #include <stdbool.h>
 #include "../Inc/tools.h"
 
+#define TIMEOUT_ANALYSE_DEBUG_COMMAND_MS_U32 ((uint32_t)500)
+
 static LOG_HAL_functions_str local_LOG_HAL_functions_STR;
 static LOG_level_en local_LOG_level_EN;
 static LOG_command_str local_LOG_command_STRA[LOG_SIZE_OF_COMMANDS_U8];
@@ -123,8 +125,9 @@ bool LOG_TreatCommand_B(char *frame_CA)
 	uint32_t crc32_U32 = 0;
 	char* crc32_CA = NULL;
 	bool process_ended_B = false;
+	uint32_t begin_time_U32 = local_LOG_HAL_functions_STR.HAL_GetTimeMs_U32();
 
-	while(process_ended_B == false) //TODO mettre un timeout
+	while(process_ended_B == false && TOOLS_IsTimeoutEnded_B(begin_time_U32, TIMEOUT_ANALYSE_DEBUG_COMMAND_MS_U32, local_LOG_HAL_functions_STR.HAL_GetTimeMs_U32()) == false)
 	{
 		switch (state_decoder_EN)
 		{
@@ -213,6 +216,7 @@ bool LOG_TreatCommand_B(char *frame_CA)
 			return false;
 		}
 	}
+	return false;
 }
 
 bool LOG_CleanReceivedBuffer_B(char* raw_buffer_CA, char *cleanin_buffer_CA) {
@@ -242,13 +246,13 @@ bool LOG_CleanReceivedBuffer_B(char* raw_buffer_CA, char *cleanin_buffer_CA) {
 void LOG_process(char* raw_buffer_CA, char *cleaning_buffer_CA)
 {
 	bool command_treated_B = false;
-	HAL_getUart2Buffer(raw_buffer_CA);
+	local_LOG_HAL_functions_STR.HAL_getUart2Buffer((uint8_t*)raw_buffer_CA);
 	if (LOG_CleanReceivedBuffer_B(raw_buffer_CA, cleaning_buffer_CA) == true)
 	{
 		command_treated_B = LOG_TreatCommand_B(cleaning_buffer_CA);
 		memset(raw_buffer_CA, 0, local_size_buffer_uart_2_rx_U16);
 		memset(cleaning_buffer_CA, 0, local_size_buffer_uart_2_rx_U16);
-		HAL_flushUart2Buffer();
+		local_LOG_HAL_functions_STR.HAL_cleanUart2Buffer();
 	}
 }
 

@@ -57,3 +57,10 @@ uint8_t calculate_crc8_U8(const uint8_t *data_U8A, uint8_t length_U8)
 
     return crc_U8;
 }
+
+bool TOOLS_IsTimeoutEnded_B(uint32_t start_time_U32, uint32_t timeout_U32, uint32_t current_time_U32)
+{
+	bool retval_B = (current_time_U32 > start_time_U32 && current_time_U32 - start_time_U32 > timeout_U32) ||
+		   (current_time_U32 < start_time_U32 && current_time_U32 - start_time_U32 + UINT32_MAX_VALUE_U32 > timeout_U32);
+	return retval_B;
+}
