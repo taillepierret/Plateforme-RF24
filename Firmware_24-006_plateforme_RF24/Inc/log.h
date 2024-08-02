@@ -10,7 +10,7 @@
 #define LOG_HIDE_TIME_B false
 
 #define LOG_SIZE_OF_COMMANDS_U8 ((uint8_t)10)
-#define LOG_COMMAND_LENGTH_U8 ((uint8_t)10)
+#define LOG_COMMAND_LENGTH_U8 ((uint8_t)30)
 
 typedef enum {
 	LOG_LEVEL_VERBOSE_EN,
