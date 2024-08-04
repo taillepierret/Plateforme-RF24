@@ -40,36 +40,36 @@ void LOG_PrintString(char *log_to_print_CP, bool show_time_B, LOG_level_en log_l
 	{
 		char time_CA[20];
 		HAL_RTC_values_str HAL_RTC_values_STR;
-		local_LOG_HAL_functions_STR.HAL_GetTime(&HAL_RTC_values_STR);
+		local_LOG_HAL_functions_STR.GetTime(&HAL_RTC_values_STR);
 		sprintf(time_CA, "%02d:%02d:%02d", HAL_RTC_values_STR.hours_U8,	HAL_RTC_values_STR.minutes_U8, HAL_RTC_values_STR.seconds_U8);
-		local_LOG_HAL_functions_STR.HAL_DebugPrint(time_CA);
-		local_LOG_HAL_functions_STR.HAL_DebugPrint("\r\n");
+		local_LOG_HAL_functions_STR.DebugPrint(time_CA);
+		local_LOG_HAL_functions_STR.DebugPrint("\r\n");
 	}
 	if (show_log_level_B)
 	{
 		switch (log_level_EN)
 		{
 		case LOG_LEVEL_VERBOSE_EN:
-			local_LOG_HAL_functions_STR.HAL_DebugPrint("[VERBOSE] ");
+			local_LOG_HAL_functions_STR.DebugPrint("[VERBOSE] ");
 			break;
 		case LOG_LEVEL_INFO_EN:
-			local_LOG_HAL_functions_STR.HAL_DebugPrint("[INFO] ");
+			local_LOG_HAL_functions_STR.DebugPrint("[INFO] ");
 			break;
 		case LOG_LEVEL_WARNING_EN:
-			local_LOG_HAL_functions_STR.HAL_DebugPrint("[WARNING] ");
+			local_LOG_HAL_functions_STR.DebugPrint("[WARNING] ");
 			break;
 		case LOG_LEVEL_ERROR_EN:
-			local_LOG_HAL_functions_STR.HAL_DebugPrint("[ERROR] ");
+			local_LOG_HAL_functions_STR.DebugPrint("[ERROR] ");
 			break;
 		}
 	}
-	local_LOG_HAL_functions_STR.HAL_DebugPrint(log_to_print_CP);
+	local_LOG_HAL_functions_STR.DebugPrint(log_to_print_CP);
 }
 
 void LOG_PrintStringCRLF(char *log_to_print_CP, bool show_time_B, LOG_level_en log_level_EN, bool show_log_level_B)
 {
 	LOG_PrintString(log_to_print_CP, show_time_B, log_level_EN,	show_log_level_B);
-	local_LOG_HAL_functions_STR.HAL_DebugPrint("\r\n");
+	local_LOG_HAL_functions_STR.DebugPrint("\r\n");
 }
 
 void LOG_PrintUint8(uint8_t value_U8, LOG_level_en log_level_EN)
@@ -82,7 +82,7 @@ void LOG_PrintUint8(uint8_t value_U8, LOG_level_en log_level_EN)
 void LOG_PrintUint8CRLF(uint8_t value_U8, LOG_level_en log_level_EN)
 {
 	LOG_PrintUint8(value_U8, log_level_EN);
-	local_LOG_HAL_functions_STR.HAL_DebugPrint("\r\n");
+	local_LOG_HAL_functions_STR.DebugPrint("\r\n");
 }
 
 void LOG_setLogLevel(LOG_level_en log_level_EN) {
@@ -125,9 +125,9 @@ bool LOG_TreatCommand_B(char *frame_CA)
 	uint32_t crc32_U32 = 0;
 	char* crc32_CA = NULL;
 	bool process_ended_B = false;
-	uint32_t begin_time_U32 = local_LOG_HAL_functions_STR.HAL_GetTimeMs_U32();
+	uint32_t begin_time_U32 = local_LOG_HAL_functions_STR.Millis_U32();
 
-	while(process_ended_B == false && TOOLS_IsTimeoutEnded_B(begin_time_U32, TIMEOUT_ANALYSE_DEBUG_COMMAND_MS_U32, local_LOG_HAL_functions_STR.HAL_GetTimeMs_U32()) == false)
+	while(process_ended_B == false && TOOLS_IsTimeoutEnded_B(begin_time_U32, TIMEOUT_ANALYSE_DEBUG_COMMAND_MS_U32, local_LOG_HAL_functions_STR.Millis_U32()) == false)
 	{
 		switch (state_decoder_EN)
 		{
@@ -246,13 +246,13 @@ bool LOG_CleanReceivedBuffer_B(char* raw_buffer_CA, char *cleanin_buffer_CA) {
 void LOG_process(char* raw_buffer_CA, char *cleaning_buffer_CA)
 {
 	bool command_treated_B = false;
-	local_LOG_HAL_functions_STR.HAL_getUart2Buffer((uint8_t*)raw_buffer_CA);
+	local_LOG_HAL_functions_STR.GetUart2Buffer(raw_buffer_CA);
 	if (LOG_CleanReceivedBuffer_B(raw_buffer_CA, cleaning_buffer_CA) == true)
 	{
 		command_treated_B = LOG_TreatCommand_B(cleaning_buffer_CA);
 		memset(raw_buffer_CA, 0, local_size_buffer_uart_2_rx_U16);
 		memset(cleaning_buffer_CA, 0, local_size_buffer_uart_2_rx_U16);
-		local_LOG_HAL_functions_STR.HAL_cleanUart2Buffer();
+		local_LOG_HAL_functions_STR.CleanUart2Buffer();
 	}
 }
 
@@ -265,16 +265,16 @@ bool LOG_printHelloWorld(void)
 void LOG_PrintUint32CRLF(uint32_t value_U32, LOG_level_en log_level_EN)
 {
 	char value_CA[11];
-	sprintf(value_CA, "%d", value_U32);
+	sprintf(value_CA, "%ld", value_U32);
 	LOG_PrintString(value_CA, false, log_level_EN, false);
-	local_LOG_HAL_functions_STR.HAL_DebugPrint("\r\n");
+	local_LOG_HAL_functions_STR.DebugPrint("\r\n");
 }
 
 
 void LOG_PrintUint32(uint32_t value_U32, LOG_level_en log_level_EN)
 {
 	char value_CA[11];
-	sprintf(value_CA, "%d", value_U32);
+	sprintf(value_CA, "%ld", value_U32);
 	LOG_PrintString(value_CA, false, log_level_EN, false);
 }
 

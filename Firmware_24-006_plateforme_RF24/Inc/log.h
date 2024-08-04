@@ -29,11 +29,11 @@ typedef struct
 typedef struct
 {
 	void (*InitDebugUart)(void);
-	void (*HAL_GetTime)(HAL_RTC_values_str* HAL_RTC_values_STR);
-	void (*HAL_DebugPrint)(char* string);
-	void (*HAL_getUart2Buffer)(uint8_t* rx_get_buffer_U8A);
-	void (*HAL_cleanUart2Buffer)(void);
-	uint32_t (*HAL_GetTimeMs_U32)(void);
+	void (*GetTime)(HAL_RTC_values_str* HAL_RTC_values_STR);
+	void (*DebugPrint)(char* string);
+	void (*GetUart2Buffer)(char* rx_get_buffer_U8A);
+	void (*CleanUart2Buffer)(void);
+	uint32_t (*Millis_U32)(void);
 }LOG_HAL_functions_str;
 
 void LOG_Init(LOG_HAL_functions_str *LOG_HAL_functions_STR, uint16_t size_buffer_uart_2_rx_U16);

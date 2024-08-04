@@ -86,6 +86,7 @@ void RADIO_SendData(uint8_t destination_address_U8, uint8_t trame_type_EN_6, uin
 void RADIO_addGroup(uint8_t group_address_U8);
 void RADIO_process(void);
 void RADIO_ShowAllNetworkPackets(void);
+void RADIO_SendPing(uint8_t destination_address_U8);
 
 
 

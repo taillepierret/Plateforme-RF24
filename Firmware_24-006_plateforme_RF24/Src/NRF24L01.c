@@ -1,5 +1,5 @@
 #include "main.h"
-#include "NRF24L01.h"
+#include "../Inc/NRF24L01.h"
 
 static NRF_HAL_function_str NRF_HAL_function_local_STR;
 static bool NRF_isInit_B = false;
