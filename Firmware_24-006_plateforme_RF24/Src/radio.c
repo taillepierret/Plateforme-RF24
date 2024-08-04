@@ -47,7 +47,7 @@ RADIO_state_receive_packet_en RADIO_state_receive_packet_EN = RADIO_RECEIVE_TRAN
 
 uint8_t buffer_U8[SIZE_BUFFER_U16];
 
-RADIO_trame_UN List_of_packet_to_send_ENA[NUMBER_PACKET_TO_LOAD_U8];
+RADIO_trame_UN List_of_packet_to_send_ENA[NUMBER_PACKET_TO_LOAD_U8] = {0};
 
 RADIO_my_ID_str my_ID_STR = {0};
 
@@ -147,6 +147,7 @@ static void RADIO_SendStateMachine(void)
             {
                 //logguer la trame d'erreur
                 error_counter_U16++;
+                curseur_lecture_U16++;
                 RADIO_state_send_packet_EN = RADIO_SEND_TRANSITION_TO_BEGIN_EN;
                 NRF_ret_val_EN = NRF24_RxMode_EN((uint8_t *)PipeAddress, 10);
 				if (NRF_ret_val_EN != NRF_OK_EN)
