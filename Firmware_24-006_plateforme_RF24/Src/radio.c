@@ -252,7 +252,7 @@ static void RADIO_ReceiveStateMachine(void)
             RADIO_state_receive_packet_EN = RADIO_RECEIVE_WAITING_FOR_RECEIVE_PACKET_EN;
             break;
         case RADIO_RECEIVE_WAITING_FOR_RECEIVE_PACKET_EN:
-            NRF_ret_val_EN = NRF24_isDataAvailable_EN(0);
+            NRF_ret_val_EN = NRF24_isDataAvailable_EN(1);
             if(NRF_ret_val_EN == NRF_DATA_AVAILABLE_EN)
             {
                 RADIO_state_receive_packet_EN = RADIO_RECEIVE_PROCESSING_EN;
@@ -432,7 +432,7 @@ void RADIO_SendPing(uint8_t destination_address_U8)
 void RADIO_ShowAllNetworkPackets(void)
 {
 	RADIO_trame_UN received_packet_UN;
-	if(NRF24_isDataAvailable_EN(0) == NRF_DATA_AVAILABLE_EN)
+	if(NRF24_isDataAvailable_EN(1) == NRF_DATA_AVAILABLE_EN)
 	{
 		if(NRF24_Receive_EN(received_packet_UN.trame_U8A) == NRF_OK_EN)
 		{
