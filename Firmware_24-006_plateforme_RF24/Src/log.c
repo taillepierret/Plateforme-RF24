@@ -262,4 +262,19 @@ bool LOG_printHelloWorld(void)
 	return true;
 }
 
+void LOG_PrintUint32CRLF(uint32_t value_U32, LOG_level_en log_level_EN)
+{
+	char value_CA[11];
+	sprintf(value_CA, "%d", value_U32);
+	LOG_PrintString(value_CA, false, log_level_EN, false);
+	local_LOG_HAL_functions_STR.HAL_DebugPrint("\r\n");
+}
+
+
+void LOG_PrintUint32(uint32_t value_U32, LOG_level_en log_level_EN)
+{
+	char value_CA[11];
+	sprintf(value_CA, "%d", value_U32);
+	LOG_PrintString(value_CA, false, log_level_EN, false);
+}
 

@@ -1,13 +1,15 @@
 #include "../Inc/radio.h"
 #include "../Inc/tools.h"
 #include "../Inc/NRF24L01.h"
+#include "../Inc/log.h"
+#include <string.h>
 
 #define SIZE_BUFFER_U16 100
 #define NUMBER_OF_RETRY_MAX_U8 3
 #define TIMEOUT_ACKNOWLEDGE_ms_U32 1000
 #define NUMBER_PACKET_TO_LOAD_U8  ((uint8_t)10)
 
-
+static const uint8_t PipeAddress[] = {0xEE,0xDD,0xCC,0xBB,0xAA};
 
 typedef enum
 {
@@ -55,13 +57,14 @@ static void RADIO_setAcknowledgeReceivedFlag(bool value_B);
 static void RADIO_sendAcknowledge(RADIO_trame_UN packet_to_ack);
 static void RADIO_SendStateMachine(void);
 static void RADIO_ReceiveStateMachine(void);
-static void RADIO_SendPacket(uint8_t destination_address_U8, uint8_t trame_type_EN_6, uint8_t *payload_U8, uint8_t payload_size_U8);
-static bool RADIO_DecodePacket_B(RADIO_trame_UN received_packet_EN);
+static bool RADIO_SendPacket_B(uint8_t destination_address_U8, uint8_t trame_type_EN_6, uint8_t *payload_U8, uint8_t payload_size_U8);
+static bool RADIO_DecodePacket_B(RADIO_trame_UN received_packet_UN);
 static void RADIO_SetMyID(uint8_t protocol_version_U8, uint8_t network_ID_U8, uint8_t my_address_U8);
 
 
-void RADIO_Init(bool (*treatment_function_B_PF)(RADIO_trame_UN), NRF_HAL_function_str NRF_HAL_function_STR, uint8_t protocol_version_U8, uint8_t network_ID_U8, uint8_t my_address_U8)
+bool RADIO_Init_B(bool (*treatment_function_B_PF)(RADIO_trame_UN), NRF_HAL_function_str NRF_HAL_function_STR, uint8_t protocol_version_U8, uint8_t network_ID_U8, uint8_t my_address_U8)
 {
+	NRF_ret_val_en NRF_ret_val_EN;
     local_NRF_HAL_function_STR = NRF_HAL_function_STR;
     NRF24_Init_EN(NRF_HAL_function_STR);
     curseur_ecriture_U16 = 0;
@@ -72,6 +75,15 @@ void RADIO_Init(bool (*treatment_function_B_PF)(RADIO_trame_UN), NRF_HAL_functio
     acknoledge_received_B = false;
     RADIO_treatment_function_B_PF = treatment_function_B_PF;
     RADIO_SetMyID(protocol_version_U8, network_ID_U8, my_address_U8);
+	NRF_ret_val_EN = NRF24_RxMode_EN((uint8_t *)PipeAddress, 10);
+	if (NRF_ret_val_EN != NRF_OK_EN)
+	{
+		return false;
+	}
+	else
+	{
+		return true;
+	}
 }
 
 static void RADIO_SendStateMachine(void)
@@ -103,18 +115,32 @@ static void RADIO_SendStateMachine(void)
             if(retry_counter_U8 < NUMBER_OF_RETRY_MAX_U8)
             {
                 //TODO Send packet
+            	NRF_ret_val_EN = NRF24_TxMode_EN((uint8_t *)PipeAddress, 10);
+            	if(NRF_ret_val_EN != NRF_OK_EN)
+            	{
+            		//logguer l'erreur
+            		error_counter_U16++;
+					return;
+            	}
                 NRF_ret_val_EN = NRF24_Transmit_EN(List_of_packet_to_send_ENA[curseur_lecture_U16].trame_U8A, SIZE_TRAME_U8);
                 if(NRF_ret_val_EN == NRF_OK_EN)
                 {
+                    NRF_ret_val_EN = NRF24_RxMode_EN((uint8_t *)PipeAddress, 10);
+    				if (NRF_ret_val_EN != NRF_OK_EN)
+    				{
+    					//logguer l'erreur
+    					error_counter_U16++;
+    				}
                     packet_ID_to_acknowledge_U32 = List_of_packet_to_send_ENA[curseur_lecture_U16].trame_str.CRC_ID_U32;
                     beginnning_send_time_U32 = local_NRF_HAL_function_STR.millis_PF_U32();
                     RADIO_state_send_packet_EN = RADIO_SEND_WAITING_ACK_EN;
+                    //TODO if(retry_counter_U8 != 0) logguer le retry dans le journal
                 }
                 else
                 {
                     //logguer la trame d'erreur
-                    error_counter_U16++;
-                    RADIO_state_send_packet_EN = RADIO_SEND_TRANSITION_TO_BEGIN_EN;
+                	retry_counter_U8++;
+                    RADIO_state_send_packet_EN = RADIO_SEND_SENDING_PACKET_EN;
                 }
             }
             else
@@ -122,6 +148,12 @@ static void RADIO_SendStateMachine(void)
                 //logguer la trame d'erreur
                 error_counter_U16++;
                 RADIO_state_send_packet_EN = RADIO_SEND_TRANSITION_TO_BEGIN_EN;
+                NRF_ret_val_EN = NRF24_RxMode_EN((uint8_t *)PipeAddress, 10);
+				if (NRF_ret_val_EN != NRF_OK_EN)
+				{
+					//logguer l'erreur
+					error_counter_U16++;
+				}
             }
             break;
         case RADIO_SEND_WAITING_ACK_EN:
@@ -134,7 +166,7 @@ static void RADIO_SendStateMachine(void)
                 }
                 RADIO_state_send_packet_EN = RADIO_SEND_TRANSITION_TO_BEGIN_EN;
             }
-            else if(local_NRF_HAL_function_STR.millis_PF_U32() - beginnning_send_time_U32 > TIMEOUT_ACKNOWLEDGE_ms_U32)
+            else if(TOOLS_IsTimeoutEnded_B(beginnning_send_time_U32, TIMEOUT_ACKNOWLEDGE_ms_U32, local_NRF_HAL_function_STR.millis_PF_U32()) == true)
             {
                 retry_counter_U8++;
                 beginnning_send_time_U32 = 0;
@@ -170,7 +202,7 @@ static void RADIO_SetMyID(uint8_t protocol_version_U8, uint8_t network_ID_U8, ui
 }
 
 
-static void RADIO_SendPacket(uint8_t destination_address_U8, uint8_t trame_type_EN_6, uint8_t *payload_U8, uint8_t payload_size_U8)
+static bool RADIO_SendPacket_B(uint8_t destination_address_U8, uint8_t trame_type_EN_6, uint8_t *payload_U8, uint8_t payload_size_U8)
 {
     RADIO_trame_UN packet_to_send_EN;
     packet_to_send_EN.trame_str.cerced_data_UN.cerced_data_str.protocol_version_U8 = my_ID_STR.my_protocol_version_U8;
@@ -179,12 +211,11 @@ static void RADIO_SendPacket(uint8_t destination_address_U8, uint8_t trame_type_
     packet_to_send_EN.trame_str.cerced_data_UN.cerced_data_str.trame_type_EN_6 = trame_type_EN_6;
     packet_to_send_EN.trame_str.cerced_data_UN.cerced_data_str.nb_nodes_traverses_U2 = 0;
     packet_to_send_EN.trame_str.cerced_data_UN.cerced_data_str.source_address_U8[0] = my_ID_STR.my_address_U8;
+    packet_to_send_EN.trame_str.cerced_data_UN.cerced_data_str.timestamp_U32 = local_NRF_HAL_function_STR.getTimestamp_PF_U32();
     if(payload_size_U8 > SIZE_PAYLOAD_U8)
     {
-        for(uint8_t i = 0; i < SIZE_PAYLOAD_U8; i++)
-        {
-            packet_to_send_EN.trame_str.cerced_data_UN.cerced_data_str.payload_U8A[i] = payload_U8[i];
-        }
+		LOG_PrintString("Payload too big", LOG_SHOW_TIME_B, LOG_LEVEL_ERROR_EN, LOG_SHOW_LOG_LEVEL_B);
+		return false;
     }
     else
     {
@@ -194,7 +225,6 @@ static void RADIO_SendPacket(uint8_t destination_address_U8, uint8_t trame_type_
         }
     }
     packet_to_send_EN.trame_str.CRC_ID_U32 = TOOLS_CRC32(packet_to_send_EN.trame_str.cerced_data_UN.cerced_data_U8A, SIZE_CERCED_DATA_U8);
-
 
     List_of_packet_to_send_ENA[curseur_ecriture_U16] = packet_to_send_EN;
     curseur_ecriture_U16++;
@@ -208,12 +238,13 @@ static void RADIO_SendPacket(uint8_t destination_address_U8, uint8_t trame_type_
         //logguer l'erreur
         error_counter_U16++;
     }
+    return true;
 }
 
 static void RADIO_ReceiveStateMachine(void)
 {
     NRF_ret_val_en NRF_ret_val_EN;
-    RADIO_trame_UN received_packet_EN;
+    RADIO_trame_UN received_packet_UN;
     bool ret_val_B = false;
     switch(RADIO_state_receive_packet_EN)
     {
@@ -232,10 +263,10 @@ static void RADIO_ReceiveStateMachine(void)
             }
             break;
         case RADIO_RECEIVE_PROCESSING_EN:
-            NRF_ret_val_EN = NRF24_Receive_EN(received_packet_EN.trame_U8A);
+            NRF_ret_val_EN = NRF24_Receive_EN(received_packet_UN.trame_U8A);
             if(NRF_ret_val_EN == NRF_OK_EN)
             {
-                ret_val_B = RADIO_DecodePacket_B(received_packet_EN);
+                ret_val_B = RADIO_DecodePacket_B(received_packet_UN);
                 if(ret_val_B != true)
                 {
                     //logguer l'erreur
@@ -284,7 +315,7 @@ uint8_t* RADIO_getGroups(void)
     return my_ID_STR.my_groups_address_U8;
 }
 
-static bool RADIO_DecodePacket_B(RADIO_trame_UN received_packet_EN)
+static bool RADIO_DecodePacket_B(RADIO_trame_UN received_packet_UN)
 {
     RADIO_steps_decode_packets_en step_decode_packet_EN = RADIO_STEPS_CHECK_PROTOCOL_VERSION_EN;
     bool packet_is_for_me_B = false;
@@ -292,7 +323,7 @@ static bool RADIO_DecodePacket_B(RADIO_trame_UN received_packet_EN)
     switch (step_decode_packet_EN)
     {
         case RADIO_STEPS_CHECK_PROTOCOL_VERSION_EN:
-            if(received_packet_EN.trame_str.cerced_data_UN.cerced_data_str.protocol_version_U8 == my_ID_STR.my_protocol_version_U8)
+            if(received_packet_UN.trame_str.cerced_data_UN.cerced_data_str.protocol_version_U8 == my_ID_STR.my_protocol_version_U8)
             {
                 step_decode_packet_EN = RADIO_STEPS_CHECK_NETWORK_ID_EN;
             }
@@ -302,7 +333,7 @@ static bool RADIO_DecodePacket_B(RADIO_trame_UN received_packet_EN)
             }
         // fall through
         case RADIO_STEPS_CHECK_NETWORK_ID_EN:
-            if(received_packet_EN.trame_str.cerced_data_UN.cerced_data_str.network_ID_U8 == my_ID_STR.my_network_ID_U8)
+            if(received_packet_UN.trame_str.cerced_data_UN.cerced_data_str.network_ID_U8 == my_ID_STR.my_network_ID_U8)
             {
                 step_decode_packet_EN = RADIO_STEPS_CHECK_DESTINATION_ADDRESS_EN;
             }
@@ -314,12 +345,12 @@ static bool RADIO_DecodePacket_B(RADIO_trame_UN received_packet_EN)
         case RADIO_STEPS_CHECK_DESTINATION_ADDRESS_EN:
             for (uint8_t i_U8 = 0; i_U8 < NUMBER_MAX_OF_GROUPS_U8; i_U8++)
             {
-                if(received_packet_EN.trame_str.cerced_data_UN.cerced_data_str.destination_address_U8 == my_ID_STR.my_groups_address_U8[i_U8])
+                if(received_packet_UN.trame_str.cerced_data_UN.cerced_data_str.destination_address_U8 == my_ID_STR.my_groups_address_U8[i_U8])
                 {
                     packet_is_for_me_B = true;
                 }
             }
-            if(packet_is_for_me_B == true || received_packet_EN.trame_str.cerced_data_UN.cerced_data_str.destination_address_U8 == my_ID_STR.my_address_U8)
+            if(packet_is_for_me_B == true || received_packet_UN.trame_str.cerced_data_UN.cerced_data_str.destination_address_U8 == my_ID_STR.my_address_U8)
             {
                 step_decode_packet_EN = RADIO_STEPS_CHECK_CRC_ID_EN;
             }
@@ -329,7 +360,7 @@ static bool RADIO_DecodePacket_B(RADIO_trame_UN received_packet_EN)
             }
         // fall through
         case RADIO_STEPS_CHECK_CRC_ID_EN:
-            if(received_packet_EN.trame_str.CRC_ID_U32 == TOOLS_CRC32(received_packet_EN.trame_str.cerced_data_UN.cerced_data_U8A, SIZE_CERCED_DATA_U8))
+            if(received_packet_UN.trame_str.CRC_ID_U32 == TOOLS_CRC32(received_packet_UN.trame_str.cerced_data_UN.cerced_data_U8A, SIZE_CERCED_DATA_U8))
             {
                 step_decode_packet_EN = RADIO_STEPS_DECODE_PROCESS_EN;
             }
@@ -339,9 +370,9 @@ static bool RADIO_DecodePacket_B(RADIO_trame_UN received_packet_EN)
             }
         // fall through
         case RADIO_STEPS_DECODE_PROCESS_EN:
-            if(received_packet_EN.trame_str.cerced_data_UN.cerced_data_str.trame_type_EN_6 == RADIO_ACKNOWLEDGEMENT_EN)
+            if(received_packet_UN.trame_str.cerced_data_UN.cerced_data_str.trame_type_EN_6 == RADIO_ACKNOWLEDGEMENT_EN)
             {
-                if(packet_ID_to_acknowledge_U32 == received_packet_EN.trame_str.cerced_data_UN.cerced_data_str.payload_U8A[0])
+                if(packet_ID_to_acknowledge_U32 == received_packet_UN.trame_str.cerced_data_UN.cerced_data_str.payload_U8A[0])
                 {
                     RADIO_setAcknowledgeReceivedFlag(true);
                     return true;
@@ -355,18 +386,25 @@ static bool RADIO_DecodePacket_B(RADIO_trame_UN received_packet_EN)
             }
             else
             {
-                ret_val_B = RADIO_treatment_function_B_PF(received_packet_EN);
-                if(ret_val_B == true)
-                {
-                    RADIO_sendAcknowledge(received_packet_EN);
-                    return true;
-                }
-                else
-                {
-                    //logguer l'erreur
-                    error_counter_U16++;
-                    return false;
-                }
+            	if(RADIO_treatment_function_B_PF != NULL)
+            	{
+            		ret_val_B = RADIO_treatment_function_B_PF(received_packet_UN);
+					if(ret_val_B == true)
+					{
+						RADIO_sendAcknowledge(received_packet_UN);
+						return true;
+					}
+					else
+					{
+						//logguer l'erreur
+						error_counter_U16++;
+						return false;
+					}
+            	}
+            	else
+            	{
+            		return true;
+            	}
             }
         default:
             return false;
@@ -376,7 +414,7 @@ static bool RADIO_DecodePacket_B(RADIO_trame_UN received_packet_EN)
 static void RADIO_sendAcknowledge(RADIO_trame_UN packet_to_ack)
 {
     uint8_t payload_U8[1] = {packet_to_ack.trame_str.CRC_ID_U32};
-    RADIO_SendPacket(packet_to_ack.trame_str.cerced_data_UN.cerced_data_str.source_address_U8[0], RADIO_ACKNOWLEDGEMENT_EN, payload_U8, 1);
+    RADIO_SendPacket_B(packet_to_ack.trame_str.cerced_data_UN.cerced_data_str.source_address_U8[0], RADIO_ACKNOWLEDGEMENT_EN, payload_U8, 1);
 }
 
 void RADIO_process(void)
@@ -388,5 +426,41 @@ void RADIO_process(void)
 void RADIO_SendPing(uint8_t destination_address_U8)
 {
     uint8_t payload_U8[1] = {RADIO_PING_EN};
-    RADIO_SendPacket(destination_address_U8, RADIO_PING_EN, payload_U8, 1);
+    RADIO_SendPacket_B(destination_address_U8, RADIO_PING_EN, payload_U8, 1);
+}
+
+void RADIO_ShowAllNetworkPackets(void)
+{
+	RADIO_trame_UN received_packet_UN;
+	if(NRF24_isDataAvailable_EN(0) == NRF_DATA_AVAILABLE_EN)
+	{
+		if(NRF24_Receive_EN(received_packet_UN.trame_U8A) == NRF_OK_EN)
+		{
+			if(received_packet_UN.trame_str.cerced_data_UN.cerced_data_str.network_ID_U8 == my_ID_STR.my_network_ID_U8)
+			{
+				LOG_PrintStringCRLF("Packet received: ", LOG_SHOW_TIME_B, LOG_LEVEL_INFO_EN, LOG_SHOW_LOG_LEVEL_B);
+				LOG_PrintString("Protocol version: ", LOG_HIDE_TIME_B, LOG_LEVEL_INFO_EN, LOG_SHOW_LOG_LEVEL_B);
+				LOG_PrintUint8CRLF(received_packet_UN.trame_str.cerced_data_UN.cerced_data_str.protocol_version_U8, LOG_LEVEL_INFO_EN);
+				LOG_PrintString("Network ID: ", LOG_HIDE_TIME_B, LOG_LEVEL_INFO_EN, LOG_SHOW_LOG_LEVEL_B);
+				LOG_PrintUint8CRLF(received_packet_UN.trame_str.cerced_data_UN.cerced_data_str.network_ID_U8, LOG_LEVEL_INFO_EN);
+				LOG_PrintString("Destination address: ", LOG_HIDE_TIME_B, LOG_LEVEL_INFO_EN, LOG_SHOW_LOG_LEVEL_B);
+				LOG_PrintUint8CRLF(received_packet_UN.trame_str.cerced_data_UN.cerced_data_str.destination_address_U8, LOG_LEVEL_INFO_EN);
+				LOG_PrintString("Trame type: ", LOG_HIDE_TIME_B, LOG_LEVEL_INFO_EN, LOG_SHOW_LOG_LEVEL_B);
+				LOG_PrintUint8CRLF(received_packet_UN.trame_str.cerced_data_UN.cerced_data_str.trame_type_EN_6, LOG_LEVEL_INFO_EN);
+				LOG_PrintString("Nb nodes traverses: ", LOG_HIDE_TIME_B, LOG_LEVEL_INFO_EN, LOG_SHOW_LOG_LEVEL_B);
+				LOG_PrintUint8CRLF(received_packet_UN.trame_str.cerced_data_UN.cerced_data_str.nb_nodes_traverses_U2, LOG_LEVEL_INFO_EN);
+				LOG_PrintString("Source address: ", LOG_HIDE_TIME_B, LOG_LEVEL_INFO_EN, LOG_SHOW_LOG_LEVEL_B);
+				LOG_PrintUint8CRLF(received_packet_UN.trame_str.cerced_data_UN.cerced_data_str.source_address_U8[0], LOG_LEVEL_INFO_EN);
+				LOG_PrintString("Timestamp: ", LOG_HIDE_TIME_B, LOG_LEVEL_INFO_EN, LOG_SHOW_LOG_LEVEL_B);
+				LOG_PrintUint32CRLF(received_packet_UN.trame_str.cerced_data_UN.cerced_data_str.timestamp_U32, LOG_LEVEL_INFO_EN);
+				LOG_PrintString("Payload: ", LOG_HIDE_TIME_B, LOG_LEVEL_INFO_EN, LOG_SHOW_LOG_LEVEL_B);
+				for (uint8_t j = 0; j < SIZE_PAYLOAD_U8; j++)
+				{
+					LOG_PrintUint8CRLF(received_packet_UN.trame_str.cerced_data_UN.cerced_data_str.payload_U8A[j], LOG_LEVEL_INFO_EN);
+				}
+				LOG_PrintString("CRC: ", LOG_HIDE_TIME_B, LOG_LEVEL_INFO_EN, LOG_SHOW_LOG_LEVEL_B);
+				LOG_PrintUint32CRLF(received_packet_UN.trame_str.CRC_ID_U32, LOG_LEVEL_INFO_EN);
+			}
+		}
+	}
 }

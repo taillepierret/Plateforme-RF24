@@ -5,7 +5,7 @@
 #include <stdbool.h>
 #include "NRF24L01.h"
 
-#define SIZE_PAYLOAD_U8 ((uint8_t)20)
+#define SIZE_PAYLOAD_U8 ((uint8_t)16)
 #define SIZE_TRAME_U8 ((uint8_t)32)
 #define SIZE_NOT_CERCED_DATA_U8 ((uint8_t)4)
 #define SIZE_CERCED_DATA_U8 ((uint8_t)SIZE_TRAME_U8-SIZE_NOT_CERCED_DATA_U8)
@@ -61,6 +61,7 @@ typedef union
                 RADIO_type_trame_en trame_type_EN_6:6;
                 uint8_t nb_nodes_traverses_U2:2;
                 uint8_t source_address_U8[4];
+                uint32_t timestamp_U32;
                 uint8_t payload_U8A[SIZE_PAYLOAD_U8];
             }cerced_data_str;
             uint8_t cerced_data_U8A[SIZE_CERCED_DATA_U8];
@@ -80,10 +81,11 @@ typedef enum
 }RADIO_steps_decode_packets_en;
 
 //global functions prototypes
-void RADIO_Init(bool (*treatment_function_B_PF)(RADIO_trame_UN), NRF_HAL_function_str NRF_HAL_function_STR, uint8_t protocol_version_U8, uint8_t network_ID_U8, uint8_t my_address_U8);
+bool RADIO_Init_B(bool (*treatment_function_B_PF)(RADIO_trame_UN), NRF_HAL_function_str NRF_HAL_function_STR, uint8_t protocol_version_U8, uint8_t network_ID_U8, uint8_t my_address_U8);
 void RADIO_SendData(uint8_t destination_address_U8, uint8_t trame_type_EN_6, uint8_t nb_nodes_traverses_U2, uint8_t payload_U8A[SIZE_PAYLOAD_U8]);
 void RADIO_addGroup(uint8_t group_address_U8);
 void RADIO_process(void);
+void RADIO_ShowAllNetworkPackets(void);
 
 
 

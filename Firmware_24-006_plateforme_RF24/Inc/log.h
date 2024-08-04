@@ -44,6 +44,9 @@ void LOG_PrintUint8(uint8_t value_U8, LOG_level_en log_level_EN);
 void LOG_setLogLevel(LOG_level_en log_level_EN);
 bool LOG_TreatCommand_B(char* command_CA);
 void LOG_process(char* raw_buffer_CA, char *cleaning_buffer_CA);
+bool LOG_addCommand_B(char *command_CA, bool (*command_function_B_FP)(void), bool (*command_function_with_argument_B_FP)(char *argument_CA));
+void LOG_PrintUint32CRLF(uint32_t value_U32, LOG_level_en log_level_EN);
+void LOG_PrintUint32(uint32_t value_U32, LOG_level_en log_level_EN);
 
 
 

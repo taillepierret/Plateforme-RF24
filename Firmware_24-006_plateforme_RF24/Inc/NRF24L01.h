@@ -82,6 +82,7 @@ typedef struct{
 	HAL_ret_val_en (*readSpiValue_EN_PF)(uint8_t reg_U8, uint8_t* read_value_U8A,uint16_t size_read_value_U16);
 	void (*delay_ms_PF)(uint32_t delay_U32);
 	uint32_t (*millis_PF_U32)(void);
+	uint32_t (*getTimestamp_PF_U32)(void);
 }NRF_HAL_function_str;
 
 
