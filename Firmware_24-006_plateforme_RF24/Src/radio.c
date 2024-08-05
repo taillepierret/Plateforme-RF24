@@ -205,7 +205,7 @@ static void RADIO_SetMyID(uint8_t protocol_version_U8, uint8_t network_ID_U8, ui
 
 static bool RADIO_SendPacket_B(uint8_t destination_address_U8, uint8_t trame_type_EN_6, uint8_t *payload_U8, uint8_t payload_size_U8)
 {
-    RADIO_trame_UN packet_to_send_EN;
+    RADIO_trame_UN packet_to_send_EN = {0};
     packet_to_send_EN.trame_str.cerced_data_UN.cerced_data_str.protocol_version_U8 = my_ID_STR.my_protocol_version_U8;
     packet_to_send_EN.trame_str.cerced_data_UN.cerced_data_str.network_ID_U8 = my_ID_STR.my_network_ID_U8;
     packet_to_send_EN.trame_str.cerced_data_UN.cerced_data_str.destination_address_U8 = destination_address_U8;
