@@ -184,17 +184,6 @@ static void RADIO_SendStateMachine(void)
     }
 }
 
-static void RADIO_setAcknowledgeReceivedFlag(bool value_B)
-{
-    if(value_B == true && acknoledge_received_B == true)
-    {
-        //logguer l'erreur
-        error_counter_U16++;
-        return;
-    }
-    acknoledge_received_B = value_B;
-}
-
 static void RADIO_SetMyID(uint8_t protocol_version_U8, uint8_t network_ID_U8, uint8_t my_address_U8)
 {
     my_ID_STR.my_protocol_version_U8 = protocol_version_U8;
@@ -375,7 +364,7 @@ static bool RADIO_DecodePacket_B(RADIO_trame_UN received_packet_UN)
             {
                 if(packet_ID_to_acknowledge_U32 == received_packet_UN.trame_str.cerced_data_UN.cerced_data_str.payload_U8A[0])
                 {
-                    RADIO_setAcknowledgeReceivedFlag(true);
+                	acknoledge_received_B = true;
                     return true;
                 }
                 else
@@ -387,12 +376,12 @@ static bool RADIO_DecodePacket_B(RADIO_trame_UN received_packet_UN)
             }
             else
             {
+				RADIO_sendAcknowledge(received_packet_UN);
             	if(RADIO_treatment_function_B_PF != NULL)
             	{
             		ret_val_B = RADIO_treatment_function_B_PF(received_packet_UN);
 					if(ret_val_B == true)
 					{
-						RADIO_sendAcknowledge(received_packet_UN);
 						return true;
 					}
 					else
@@ -457,8 +446,10 @@ void RADIO_ShowAllNetworkPackets(void)
 				LOG_PrintString("Payload: ", LOG_HIDE_TIME_B, LOG_LEVEL_INFO_EN, LOG_SHOW_LOG_LEVEL_B);
 				for (uint8_t j = 0; j < SIZE_PAYLOAD_U8; j++)
 				{
-					LOG_PrintUint8CRLF(received_packet_UN.trame_str.cerced_data_UN.cerced_data_str.payload_U8A[j], LOG_LEVEL_INFO_EN);
+					LOG_PrintUint8(received_packet_UN.trame_str.cerced_data_UN.cerced_data_str.payload_U8A[j], LOG_LEVEL_INFO_EN);
+					LOG_PrintString(" ", LOG_HIDE_TIME_B, LOG_LEVEL_INFO_EN, LOG_HIDE_LOG_LEVEL_B);
 				}
+				LOG_PrintStringCRLF("", LOG_HIDE_TIME_B, LOG_LEVEL_INFO_EN, LOG_SHOW_LOG_LEVEL_B);
 				LOG_PrintString("CRC: ", LOG_HIDE_TIME_B, LOG_LEVEL_INFO_EN, LOG_SHOW_LOG_LEVEL_B);
 				LOG_PrintUint32CRLF(received_packet_UN.trame_str.CRC_ID_U32, LOG_LEVEL_INFO_EN);
 			}
